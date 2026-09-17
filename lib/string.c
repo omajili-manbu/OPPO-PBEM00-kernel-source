@@ -959,3 +959,11 @@ void fortify_panic(const char *name)
 	BUG();
 }
 EXPORT_SYMBOL(fortify_panic);
+
+/* bcmp - legacy memcmp alias; required by clang-generated libcalls. */
+#undef bcmp
+__visible int bcmp(const void *cs, const void *ct, size_t count)
+{
+	return memcmp(cs, ct, count);
+}
+EXPORT_SYMBOL(bcmp);
