@@ -415,6 +415,12 @@ KBUILD_CPPFLAGS += -DVENDOR_EDIT
 CFLAGS_KERNEL +=   -DVENDOR_EDIT
 CFLAGS_MODULE +=   -DVENDOR_EDIT
 
+OPPO_TARGET_DEVICE ?= MSM_18081
+TARGET_PRODUCT ?= sdm670
+export OPPO_TARGET_DEVICE
+export TARGET_PRODUCT
+
+
 #Added by guanling.yang@SCM.ROM 2015-11-23 add for disable fastboot modem at release soft
 #Ping.Liu@BSP.Fingerprint.Secure 2018/10/17, Modify for fastboot unlock verify at release soft.
 #Ping.Liu@BSP.Fingerprint.Secure 2018/11/20, Modify for disable fastboot at not release soft.
