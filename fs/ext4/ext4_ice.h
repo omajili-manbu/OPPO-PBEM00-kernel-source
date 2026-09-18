@@ -14,7 +14,7 @@
 #define _EXT4_ICE_H
 
 #include "ext4.h"
-#include <linux/fscrypto.h>
+#include <linux/fscrypt.h>
 
 #ifdef CONFIG_EXT4_FS_ICE_ENCRYPTION
 static inline int ext4_should_be_processed_by_ice(const struct inode *inode)

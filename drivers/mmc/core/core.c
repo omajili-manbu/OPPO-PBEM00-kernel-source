@@ -1062,9 +1062,7 @@ void mmc_request_done(struct mmc_host *host, struct mmc_request *mrq)
 				completion = ktime_get();
 				delta_us = ktime_us_delta(completion,
 							  mrq->io_start);
-				blk_update_latency_hist(&host->io_lat_s,
-					(mrq->data->flags & MMC_DATA_READ),
-					delta_us);
+				blk_update_latency_hist(&host->io_lat_s, delta_us);
 			}
 #endif
 		}
@@ -4834,7 +4832,7 @@ latency_hist_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	struct mmc_host *host = cls_dev_to_mmc_host(dev);
 
-	return blk_latency_hist_show(&host->io_lat_s, buf);
+	return blk_latency_hist_show("io", &host->io_lat_s, buf, PAGE_SIZE);
 }
 
 /*
@@ -4853,7 +4851,7 @@ latency_hist_store(struct device *dev, struct device_attribute *attr,
 	if (kstrtol(buf, 0, &value))
 		return -EINVAL;
 	if (value == BLK_IO_LAT_HIST_ZERO)
-		blk_zero_latency_hist(&host->io_lat_s);
+		memset(&host->io_lat_s, 0, sizeof(host->io_lat_s));
 	else if (value == BLK_IO_LAT_HIST_ENABLE ||
 		 value == BLK_IO_LAT_HIST_DISABLE)
 		host->latency_hist_enabled = value;

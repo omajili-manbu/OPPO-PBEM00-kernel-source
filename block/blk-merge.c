@@ -6,7 +6,7 @@
 #include <linux/bio.h>
 #include <linux/blkdev.h>
 #include <linux/scatterlist.h>
-#include <linux/pfk.h>
+
 #include <trace/events/block.h>
 
 #include "blk.h"
@@ -305,13 +305,7 @@ void blk_recalc_rq_segments(struct request *rq)
 
 void blk_recount_segments(struct request_queue *q, struct bio *bio)
 {
-	unsigned short seg_cnt;
-
-	/* estimate segment number by bi_vcnt for non-cloned bio */
-	if (bio_flagged(bio, BIO_CLONED))
-		seg_cnt = bio_segments(bio);
-	else
-		seg_cnt = bio->bi_vcnt;
+	unsigned short seg_cnt = bio_segments(bio);
 
 	if (test_bit(QUEUE_FLAG_NO_SG_MERGE, &q->queue_flags) &&
 			(seg_cnt < queue_max_segments(q)))
@@ -491,11 +485,11 @@ int blk_rq_map_sg(struct request_queue *q, struct request *rq,
 	return nsegs;
 }
 EXPORT_SYMBOL(blk_rq_map_sg);
+EXPORT_SYMBOL(blk_recalc_rq_segments);
 
 /*
- * map a request to scatterlist without combining PHY CONT
- * blocks, return number of sg entries setup. Caller
- * must make sure sg can hold rq->nr_phys_segments entries
+ * map a request to scatterlist without combining PHY CONT blocks,
+ * return number of sg entries setup.
  */
 int blk_rq_map_sg_no_cluster(struct request_queue *q, struct request *rq,
 		  struct scatterlist *sglist)
@@ -506,16 +500,11 @@ int blk_rq_map_sg_no_cluster(struct request_queue *q, struct request *rq,
 	int nsegs, cluster = 0;
 
 	nsegs = 0;
-
-	/*
-	 * for each bio in rq
-	 */
 	sg = NULL;
 	rq_for_each_segment(bvec, rq, iter) {
 		__blk_segment_map_sg(q, &bvec, sglist, &bvprv, &sg,
 				     &nsegs, &cluster);
-	} /* segments in rq */
-
+	}
 
 	if (!sg)
 		return nsegs;
@@ -725,11 +714,6 @@ static void blk_account_io_merge(struct request *req)
 	}
 }
 
-static bool crypto_not_mergeable(const struct bio *bio, const struct bio *nxt)
-{
-	return (!pfk_allow_merge_bio(bio, nxt));
-}
-
 /*
  * Has to be called with the request spinlock acquired
  */
@@ -757,8 +741,6 @@ static int attempt_merge(struct request_queue *q, struct request *req,
 	    !blk_write_same_mergeable(req->bio, next->bio))
 		return 0;
 
-	if (crypto_not_mergeable(req->bio, next->bio))
-		return 0;
 	/*
 	 * If we are allowed to merge, then append bio list
 	 * from next to rq and release next. merge_requests_fn
@@ -869,8 +851,6 @@ bool blk_rq_merge_ok(struct request *rq, struct bio *bio)
 	    !blk_write_same_mergeable(rq->bio, bio))
 		return false;
 
-	if (crypto_not_mergeable(rq->bio, bio))
-		return false;
 	return true;
 }
 

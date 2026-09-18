@@ -592,7 +592,7 @@ no_delete:
 			!exist_written_data(sbi, inode->i_ino, ORPHAN_INO));
 	}
 out_clear:
-	f2fs_fscrypt_put_encryption_info(inode);
+	fscrypt_put_encryption_info(inode);
 	clear_inode(inode);
 }
 

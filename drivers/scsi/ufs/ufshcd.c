@@ -5800,9 +5800,7 @@ static void __ufshcd_transfer_req_compl(struct ufs_hba *hba,
 					delta_us = ktime_us_delta(completion,
 						  req->lat_hist_io_start);
 					/* rq_data_dir() => true if WRITE */
-					blk_update_latency_hist(&hba->io_lat_s,
-						(rq_data_dir(req) == READ),
-						delta_us);
+					blk_update_latency_hist(&hba->io_lat_s, delta_us);
 				}
 			}
 			/* Do not touch lrbp after scsi done */
@@ -9888,7 +9886,7 @@ latency_hist_store(struct device *dev, struct device_attribute *attr,
 	if (kstrtol(buf, 0, &value))
 		return -EINVAL;
 	if (value == BLK_IO_LAT_HIST_ZERO)
-		blk_zero_latency_hist(&hba->io_lat_s);
+		memset(&hba->io_lat_s, 0, sizeof(hba->io_lat_s));
 	else if (value == BLK_IO_LAT_HIST_ENABLE ||
 		 value == BLK_IO_LAT_HIST_DISABLE)
 		hba->latency_hist_enabled = value;
@@ -9901,7 +9899,7 @@ latency_hist_show(struct device *dev, struct device_attribute *attr,
 {
 	struct ufs_hba *hba = dev_get_drvdata(dev);
 
-	return blk_latency_hist_show(&hba->io_lat_s, buf);
+	return blk_latency_hist_show("io", &hba->io_lat_s, buf, PAGE_SIZE);
 }
 
 static DEVICE_ATTR(latency_hist, S_IRUGO | S_IWUSR,

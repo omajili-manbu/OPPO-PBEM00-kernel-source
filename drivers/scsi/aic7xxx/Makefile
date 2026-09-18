@@ -83,3 +83,5 @@ endif
 
 $(obj)/aicasm/aicasm: $(src)/aicasm/*.[chyl]
 	$(MAKE) -C $(src)/aicasm
+
+ccflags-y += -Wno-error=ignored-optimization-argument

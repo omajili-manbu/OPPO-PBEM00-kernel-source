@@ -39,6 +39,7 @@
 #include <asm/errno.h>
 #include <asm/memory.h>
 #include <asm/compiler.h>
+#include <asm/barrier.h>
 
 #define VERIFY_READ 0
 #define VERIFY_WRITE 1
@@ -442,6 +443,26 @@ extern long strncpy_from_user(char *dest, const char __user *src, long count);
 
 extern __must_check long strlen_user(const char __user *str);
 extern __must_check long strnlen_user(const char __user *str, long n);
+
+/*
+ * Sanitise a uaccess pointer such that it becomes NULL if above the
+ * current addr_limit.
+ */
+#define uaccess_mask_ptr(ptr) (__typeof__(ptr))__uaccess_mask_ptr(ptr)
+static inline void __user *__uaccess_mask_ptr(const void __user *ptr)
+{
+	void __user *safe_ptr;
+
+	asm volatile(
+	"\tbics\txzr, %1, %2\n"
+	"\tcsel\t%0, %1, xzr, eq\n"
+	: "=&r" (safe_ptr)
+	: "r" (ptr), "r" (current_thread_info()->addr_limit)
+	: "cc");
+
+	csdb();
+	return safe_ptr;
+}
 
 #else	/* __ASSEMBLY__ */
 

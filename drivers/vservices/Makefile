@@ -14,3 +14,5 @@ vservices_skeleton_driver-objs = skeleton_driver.o
 obj-$(CONFIG_VSERVICES_SUPPORT) += transport/
 
 obj-$(CONFIG_VSERVICES_SUPPORT) += protocol/
+
+ccflags-y += -Wno-error=ignored-optimization-argument

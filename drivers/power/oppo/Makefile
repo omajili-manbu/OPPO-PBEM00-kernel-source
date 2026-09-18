@@ -13,3 +13,4 @@ obj-y	+= oppo_gauge.o
 obj-y	+= oppo_vooc.o
 obj-y	+= oppo_adapter.o
 obj-y	+= oppo_short.o
+ccflags-y += -Wno-error=ignored-optimization-argument

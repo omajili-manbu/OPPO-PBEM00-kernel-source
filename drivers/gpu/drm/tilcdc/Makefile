@@ -15,3 +15,5 @@ tilcdc-y := \
 	tilcdc_drv.o
 
 obj-$(CONFIG_DRM_TILCDC)	+= tilcdc.o
+
+ccflags-y += -Wno-error=ignored-optimization-argument

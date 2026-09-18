@@ -1967,6 +1967,7 @@ ret:
 	return result;
 
 out_free:
+	em28xx_uninit_usb_xfer(dev, EM28XX_DIGITAL_MODE);
 	kfree(dvb);
 	dev->dvb = NULL;
 	goto ret;
@@ -2015,7 +2016,9 @@ static int em28xx_dvb_fini(struct em28xx *dev)
 			dvb->fe[1]->exit = DVB_FE_DEVICE_REMOVED;
 		}
 	}
+
 	em28xx_unregister_dvb(dvb);
+
 	/* remove I2C SEC */
 	client = dvb->i2c_client_sec;
 	if (client) {
@@ -2037,7 +2040,6 @@ static int em28xx_dvb_fini(struct em28xx *dev)
 		i2c_unregister_device(client);
 	}
 
-	
 	kfree(dvb);
 	dev->dvb = NULL;
 	kref_put(&dev->ref, em28xx_free_device);

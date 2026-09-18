@@ -25,10 +25,7 @@ typedef void (bio_end_io_t) (struct bio *);
 struct bio {
 	struct bio		*bi_next;	/* request queue link */
 	struct block_device	*bi_bdev;
-#ifdef VENDOR_EDIT
-//Zhenjian.Jiang@PSW.BSP.FS.F2FS, 2018/05/14, Add for upgrade f2fs to v4.17-rc1
 	unsigned short		bi_write_hint;
-#endif /*VENDOR_EDIT*/
 	int			bi_error;
 	unsigned int		bi_opf;		/* bottom bits req flags,
 						 * top bits REQ_OP. Use
@@ -85,12 +82,6 @@ struct bio {
 	struct bio_set		*bi_pool;
 
 	/*
-	 * When using dircet-io (O_DIRECT), we can't get the inode from a bio
-	 * by walking bio->bi_io_vec->bv_page->mapping->host
-	 * since the page is anon.
-	 */
-	struct inode		*bi_dio_inode;
-	/*
 	 * We can inline a number of vecs at the end of the bio, to avoid
 	 * double allocations for a small number of bio_vecs. This member
 	 * MUST obviously be kept at the very end of the bio.
@@ -126,24 +117,18 @@ struct bio {
 #define BIO_BOUNCED	3	/* bio is a bounce bio */
 #define BIO_USER_MAPPED 4	/* contains user pages */
 #define BIO_NULL_MAPPED 5	/* contains invalid user pages */
-#define BIO_QUIET	6	/* Make BIO Quiet */
-#define BIO_CHAIN	7	/* chained bio, ->bi_remaining in effect */
-#define BIO_REFFED	8	/* bio has elevated ->bi_cnt */
+#define BIO_WORKINGSET	6	/* contains userspace workingset pages */
+#define BIO_QUIET	7	/* Make BIO Quiet */
+#define BIO_CHAIN	8	/* chained bio, ->bi_remaining in effect */
+#define BIO_REFFED	9	/* bio has elevated ->bi_cnt */
+#define BIO_DONTFREE		10
+#define BIO_INLINECRYPT		11
 
 /*
  * Flags starting here get preserved by bio_reset() - this includes
  * BVEC_POOL_IDX()
  */
 #define BIO_RESET_BITS	10
-
-
-/*
- * Added for Req based dm which need to perform post processing. This flag
- * ensures blk_update_request does not free the bios or request, this is done
- * at the dm level
- */
-#define BIO_DONTFREE	10
-#define BIO_INLINECRYPT	11
 
 /*
  * We support 6 different bvec pools, the last one is magic in that it
@@ -189,7 +174,7 @@ enum rq_flag_bits {
 				 * throttling rules. Don't do it again. */
 
 	/* request only flags */
-	__REQ_SORTED = __REQ_RAHEAD, /* elevator knows about this request */
+	__REQ_SORTED,		/* elevator knows about this request */
 	__REQ_SOFTBARRIER,	/* may not be passed by ioscheduler */
 	__REQ_NOMERGE,		/* don't touch this for merging */
 	__REQ_STARTED,		/* drive already may have started this one */
@@ -219,9 +204,10 @@ enum rq_flag_bits {
 #define REQ_SYNC		(1ULL << __REQ_SYNC)
 #define REQ_META		(1ULL << __REQ_META)
 #define REQ_PRIO		(1ULL << __REQ_PRIO)
-#define REQ_URGENT		(1ULL << __REQ_URGENT)
 #define REQ_NOIDLE		(1ULL << __REQ_NOIDLE)
 #define REQ_INTEGRITY		(1ULL << __REQ_INTEGRITY)
+#define REQ_BARRIER		(1ULL << __REQ_BARRIER)
+#define REQ_URGENT		(1ULL << __REQ_URGENT)
 
 #define REQ_FAILFAST_MASK \
 	(REQ_FAILFAST_DEV | REQ_FAILFAST_TRANSPORT | REQ_FAILFAST_DRIVER)
@@ -240,7 +226,6 @@ enum rq_flag_bits {
 #define REQ_SORTED		(1ULL << __REQ_SORTED)
 #define REQ_SOFTBARRIER		(1ULL << __REQ_SOFTBARRIER)
 #define REQ_FUA			(1ULL << __REQ_FUA)
-#define REQ_BARRIER		(1ULL << __REQ_BARRIER)
 #define REQ_NOMERGE		(1ULL << __REQ_NOMERGE)
 #define REQ_STARTED		(1ULL << __REQ_STARTED)
 #define REQ_DONTPREP		(1ULL << __REQ_DONTPREP)

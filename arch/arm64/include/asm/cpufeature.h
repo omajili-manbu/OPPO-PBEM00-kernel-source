@@ -116,6 +116,9 @@ static inline bool cpus_have_cap(unsigned int num)
 		return test_bit(num, cpu_hwcaps);
 }
 
+/* compat (plan-B port): upstream const-cap helper */
+#define cpus_have_const_cap(num)	cpus_have_cap(num)
+
 static inline void cpus_set_cap(unsigned int num)
 {
 	if (num >= ARM64_NCAPS) {

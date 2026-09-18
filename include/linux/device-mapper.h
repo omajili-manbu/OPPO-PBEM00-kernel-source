@@ -437,6 +437,9 @@ int dm_suspended(struct dm_target *ti);
 int dm_noflush_suspending(struct dm_target *ti);
 void dm_accept_partial_bio(struct bio *bio, unsigned n_sectors);
 union map_info *dm_get_rq_mapinfo(struct request *rq);
+void dm_dispatch_request(struct request *rq);
+void dm_end_request(struct request *clone, int error);
+void dm_kill_unmapped_request(struct request *rq, int error);
 
 struct queue_limits *dm_get_queue_limits(struct mapped_device *md);
 
@@ -589,8 +592,6 @@ extern struct ratelimit_state dm_ratelimit_state;
 #define DMEMIT(x...) sz += ((sz >= maxlen) ? \
 			  0 : scnprintf(result + sz, maxlen - sz, x))
 
-#define SECTOR_SHIFT 9
-
 /*
  * Definitions of return values from target end_io function.
  */
@@ -640,7 +641,7 @@ extern struct ratelimit_state dm_ratelimit_state;
  */
 #define dm_target_offset(ti, sector) ((sector) - (ti)->begin)
 
-static inline sector_t to_sector(unsigned long n)
+static inline sector_t to_sector(unsigned long long n)
 {
 	return (n >> SECTOR_SHIFT);
 }
@@ -649,13 +650,5 @@ static inline unsigned long to_bytes(sector_t n)
 {
 	return (n << SECTOR_SHIFT);
 }
-
-/*-----------------------------------------------------------------
- * Helper for block layer and dm core operations
- *-----------------------------------------------------------------
- */
-void dm_dispatch_request(struct request *rq);
-void dm_kill_unmapped_request(struct request *rq, int error);
-void dm_end_request(struct request *clone, int error);
 
 #endif	/* _LINUX_DEVICE_MAPPER_H */

@@ -29,9 +29,31 @@ unsigned pagevec_lookup_entries(struct pagevec *pvec,
 void pagevec_remove_exceptionals(struct pagevec *pvec);
 unsigned pagevec_lookup(struct pagevec *pvec, struct address_space *mapping,
 		pgoff_t start, unsigned nr_pages);
-unsigned pagevec_lookup_tag(struct pagevec *pvec,
-		struct address_space *mapping, pgoff_t *index, int tag,
-		unsigned nr_pages);
+unsigned pagevec_lookup_range_tag(struct pagevec *pvec,
+		struct address_space *mapping, pgoff_t *index, pgoff_t end,
+		int tag);
+unsigned pagevec_lookup_range_nr_tag(struct pagevec *pvec,
+		struct address_space *mapping, pgoff_t *index, pgoff_t end,
+		int tag, unsigned max_pages);
+static inline unsigned __pagevec_lookup_tag4(struct pagevec *pvec,
+                struct address_space *mapping, pgoff_t *index, int tag)
+{
+        return pagevec_lookup_range_tag(pvec, mapping, index, (pgoff_t)-1, tag);
+}
+
+static inline unsigned __pagevec_lookup_tag5(struct pagevec *pvec,
+                struct address_space *mapping, pgoff_t *index, int tag,
+                unsigned nr_pages)
+{
+        if (!nr_pages)
+                return 0;
+        return pagevec_lookup_range_tag(pvec, mapping, index,
+                                        *index + nr_pages - 1, tag);
+}
+
+#define __PV_TAG_SEL(_1, _2, _3, _4, _5, NAME, ...) NAME
+#define pagevec_lookup_tag(...) \
+        __PV_TAG_SEL(__VA_ARGS__, __pagevec_lookup_tag5, __pagevec_lookup_tag4)(__VA_ARGS__)
 
 static inline void pagevec_init(struct pagevec *pvec, int cold)
 {

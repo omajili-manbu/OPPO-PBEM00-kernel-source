@@ -254,7 +254,7 @@ struct f2fs_dir_entry *f2fs_find_entry(struct inode *dir,
 	struct fscrypt_name fname;
 	int err;
 
-	err = f2fs_fscrypt_setup_filename(dir, child, 1, &fname);
+	err = fscrypt_setup_filename(dir, child, 1, &fname);
 	if (err) {
 		if (err == -ENOENT)
 			*res_page = NULL;
@@ -390,7 +390,7 @@ struct page *init_inode_metadata(struct inode *inode, struct inode *dir,
 
 		if ((f2fs_encrypted_inode(dir) || dummy_encrypt) &&
 					f2fs_may_encrypt(inode)) {
-			err = f2fs_fscrypt_inherit_context(dir, inode, page, false);
+			err = fscrypt_inherit_context(dir, inode, page, false);
 			if (err)
 				goto put_error;
 		}
@@ -618,7 +618,7 @@ int __f2fs_add_link(struct inode *dir, const struct qstr *name,
 	struct f2fs_dir_entry *de = NULL;
 	int err;
 
-	err = f2fs_fscrypt_setup_filename(dir, name, 0, &fname);
+	err = fscrypt_setup_filename(dir, name, 0, &fname);
 	if (err)
 		return err;
 
@@ -815,7 +815,7 @@ int f2fs_fill_dentries(struct dir_context *ctx, struct f2fs_dentry_ptr *d,
 			int save_len = fstr->len;
 			int err;
 
-			err = f2fs_fscrypt_fname_disk_to_usr(d->inode,
+			err = fscrypt_fname_disk_to_usr(d->inode,
 						(u32)de->hash_code, 0,
 						&de_name, fstr);
 			if (err)
@@ -852,11 +852,11 @@ static int f2fs_readdir(struct file *file, struct dir_context *ctx)
 	int err = 0;
 
 	if (f2fs_encrypted_inode(inode)) {
-		err = f2fs_fscrypt_get_encryption_info(inode);
+		err = fscrypt_get_encryption_info(inode);
 		if (err && err != -ENOKEY)
 			goto out;
 
-		err = f2fs_fscrypt_fname_alloc_buffer(inode, F2FS_NAME_LEN, &fstr);
+		err = fscrypt_fname_alloc_buffer(inode, F2FS_NAME_LEN, &fstr);
 		if (err < 0)
 			goto out;
 	}
@@ -905,7 +905,7 @@ static int f2fs_readdir(struct file *file, struct dir_context *ctx)
 		f2fs_put_page(dentry_page, 1);
 	}
 out_free:
-	f2fs_fscrypt_fname_free_buffer(&fstr);
+	fscrypt_fname_free_buffer(&fstr);
 out:
 	trace_f2fs_readdir(inode, start_pos, ctx->pos, err);
 	return err < 0 ? err : 0;
@@ -914,7 +914,7 @@ out:
 static int f2fs_dir_open(struct inode *inode, struct file *filp)
 {
 	if (f2fs_encrypted_inode(inode))
-		return f2fs_fscrypt_get_encryption_info(inode) ? -EACCES : 0;
+		return fscrypt_get_encryption_info(inode) ? -EACCES : 0;
 	return 0;
 }
 

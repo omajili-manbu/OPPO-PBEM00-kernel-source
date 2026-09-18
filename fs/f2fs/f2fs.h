@@ -22,7 +22,7 @@
 #include <linux/vmalloc.h>
 #include <linux/bio.h>
 #include <linux/blkdev.h>
-#include <linux/fscrypto.h>
+#include <linux/fscrypt.h>
 #include <crypto/hash.h>
 
 #ifdef CONFIG_F2FS_CHECK_FS

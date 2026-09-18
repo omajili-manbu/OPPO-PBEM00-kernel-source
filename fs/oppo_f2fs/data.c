@@ -63,9 +63,9 @@ static void f2fs_read_end_io(struct bio *bio)
 
 	if (f2fs_bio_encrypted(bio)) {
 		if (bio->bi_error) {
-			f2fs_fscrypt_release_ctx(bio->bi_private);
+			fscrypt_release_ctx(bio->bi_private);
 		} else {
-			f2fs_fscrypt_decrypt_bio_pages(bio->bi_private, bio);
+			fscrypt_enqueue_decrypt_bio(bio->bi_private, bio);
 			return;
 		}
 	}
@@ -106,7 +106,7 @@ static void f2fs_write_end_io(struct bio *bio)
 			continue;
 		}
 
-		f2fs_fscrypt_pullback_bio_page(&page, true);
+		fscrypt_pullback_bio_page(&page, true);
 
 		if (unlikely(bio->bi_error)) {
 			mapping_set_error(page->mapping, -EIO);
@@ -483,7 +483,7 @@ static struct bio *f2fs_grab_read_bio(struct inode *inode, block_t blkaddr,
 	struct bio *bio;
 
 	if (f2fs_encrypted_file(inode)) {
-		ctx = f2fs_fscrypt_get_ctx(inode, GFP_NOFS);
+		ctx = fscrypt_get_ctx(inode, GFP_NOFS);
 		if (IS_ERR(ctx))
 			return ERR_CAST(ctx);
 
@@ -494,7 +494,7 @@ static struct bio *f2fs_grab_read_bio(struct inode *inode, block_t blkaddr,
 	bio = f2fs_bio_alloc(sbi, min_t(int, nr_pages, BIO_MAX_PAGES), false);
 	if (!bio) {
 		if (ctx)
-			f2fs_fscrypt_release_ctx(ctx);
+			fscrypt_release_ctx(ctx);
 		return ERR_PTR(-ENOMEM);
 	}
 	f2fs_target_device(sbi, blkaddr, bio);
@@ -1527,7 +1527,7 @@ static int encrypt_one_page(struct f2fs_io_info *fio)
 	f2fs_wait_on_block_writeback(fio->sbi, fio->old_blkaddr);
 
 retry_encrypt:
-	fio->encrypted_page = f2fs_fscrypt_encrypt_page(inode, fio->page,
+	fio->encrypted_page = fscrypt_encrypt_page(inode, fio->page,
 			PAGE_SIZE, 0, fio->page->index, gfp_flags);
 	if (!IS_ERR(fio->encrypted_page))
 		return 0;

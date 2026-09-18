@@ -194,3 +194,4 @@ int swap_ratio(struct swap_info_struct **si)
 	else
 		return -ENODEV;
 }
+
